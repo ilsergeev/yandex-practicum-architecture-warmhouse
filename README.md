@@ -48,7 +48,8 @@
 ### 5. Визуализация контекста системы — диаграмма С4
 C4 As-Is диаграмма контекстов
 ![C4 As-Is диаграмма контекстов](./diagrams/context/Context_C4_As-Is.png)
-Исходник: [Context_C4_As-Is.puml](./diagrams/Context_C4_As-Is.puml)
+
+Исходник: [Context_C4_As-Is.puml](./diagrams/context/Context_C4_As-Is.puml)
 
 # Задание 2. Проектирование микросервисной архитектуры
 
