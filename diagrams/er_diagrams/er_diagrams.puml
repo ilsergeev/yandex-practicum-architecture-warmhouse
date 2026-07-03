@@ -1,0 +1,327 @@
+@startuml
+title ER — Smart Home «Тёплый дом»
+hide circle
+skinparam linetype ortho
+
+' ==================== IDENTITY ====================
+entity Account {
+  * AccountId : uuid <<PK>>
+  --
+  Login : varchar(128) <<unique, nullable>>
+  Email : varchar(128) <<unique, nullable>>
+  Phone : varchar(16) <<unique, nullable>>
+  * PasswordHash : varchar(255)
+  * Role : varchar(32)
+  * State : varchar(32)
+  LastLoginAt : timestamptz <<nullable>>
+  * CreatedAt : timestamptz
+  * UpdatedAt : timestamptz
+}
+
+entity User {
+  * UserId : uuid <<PK>>
+  --
+  * AccountId : uuid <<FK>>
+  * Name : varchar(128)
+  * Surname : varchar(128)
+  Patronymic : varchar(128) <<nullable>>
+  BirthDay : date <<nullable>>
+  Gender : varchar(32) <<nullable>>
+  * CreatedAt : timestamptz
+  * UpdatedAt : timestamptz
+}
+
+' ==================== DEVICE ====================
+entity House {
+  * HouseId : uuid <<PK>>
+  --
+  * AccountId : uuid <<FK>>
+  * Title : varchar(128)
+  Description : varchar(256) <<nullable>>
+  Address : varchar(256) <<nullable>>
+  Region : varchar(128) <<nullable>>
+  * CreatedAt : timestamptz
+  * UpdatedAt : timestamptz
+}
+
+entity Room {
+  * RoomId : uuid <<PK>>
+  --
+  * HouseId : uuid <<FK>>
+  * Title : varchar(128)
+  Floor : int <<nullable>>
+  * CreatedAt : timestamptz
+  * UpdatedAt : timestamptz
+}
+
+entity DeviceType {
+  * DeviceTypeId : uuid <<PK>>
+  --
+  * Vendor : varchar(128)
+  * Model : varchar(128)
+  * Protocol : varchar(32)
+  * Origin : varchar(16)
+  Capabilities : jsonb
+  * CreatedAt : timestamptz
+  * UpdatedAt : timestamptz
+}
+
+entity Device {
+  * DeviceId : uuid <<PK>>
+  --
+  * DeviceTypeId : uuid <<FK>>
+  * RoomId : uuid <<FK>>
+  DisplayName : varchar(128) <<nullable>>
+  * SerialNumber : varchar(128) <<unique>>
+  MacAddress : varchar(32) <<nullable, unique>>
+  FirmwareVersion : varchar(32) <<nullable>>
+  * CreatedAt : timestamptz
+  * UpdatedAt : timestamptz
+}
+
+entity DeviceState {
+  * DeviceId : uuid <<PK, FK>>
+  --
+  * Status : varchar(32)
+  LastMetricName : varchar(64) <<nullable>>
+  LastValue : varchar(64) <<nullable>>
+  LastData : jsonb <<nullable>>
+  LastSeenAt : timestamptz <<nullable>>
+  * UpdatedAt : timestamptz
+}
+
+' ==================== TELEMETRY ====================
+entity Telemetry {
+  * TelemetryId : uuid <<PK>>
+  --
+  * DeviceId : uuid <<FK>>
+  * MetricName : varchar(64)
+  MetricData : jsonb
+  * MeasuredAt : timestamptz
+}
+
+' ==================== CORE ====================
+entity Scenario {
+  * ScenarioId : uuid <<PK>>
+  --
+  * AccountId : uuid <<FK>>
+  * Title : varchar(128)
+  Description : varchar(256) <<nullable>>
+  * IsEnabled : boolean
+  * CreatedAt : timestamptz
+  * UpdatedAt : timestamptz
+}
+
+entity Rule {
+  * RuleId : uuid <<PK>>
+  --
+  * ScenarioId : uuid <<FK>>
+  * TriggerType : varchar(32)
+  ConditionParam : varchar(64) <<nullable>>
+  ConditionOperator : varchar(8) <<nullable>>
+  ConditionValue : varchar(64) <<nullable>>
+  TriggerSource : varchar(64) <<nullable>>
+  * CreatedAt : timestamptz
+  * UpdatedAt : timestamptz
+}
+
+entity Action {
+  * ActionId : uuid <<PK>>
+  --
+  * RuleId : uuid <<FK>>
+  DeviceId : uuid <<FK, nullable>>
+  ReqCapability : varchar(64) <<nullable>>
+  * CastType : varchar(16)
+  * Command : varchar(64)
+  Value : varchar(64) <<nullable>>
+  * CreatedAt : timestamptz
+}
+
+entity ScenarioLog {
+  * ScenarioLogId : uuid <<PK>>
+  --
+  * ScenarioId : uuid <<FK>>
+  * RuleId : uuid <<FK>>
+  * ExecutedAt : timestamptz
+  * Result : varchar(32)
+}
+
+' ==================== MARKET ====================
+entity Product {
+  * ProductId : uuid <<PK>>
+  --
+  DeviceTypeId : uuid <<FK, nullable>>
+  * Title : varchar(128)
+  Description : varchar(512) <<nullable>>
+  * Price : numeric(12,2)
+  * Currency : varchar(3)
+  * AvailableCount : int
+  * IsActive : boolean
+  ImageUrl : varchar(512) <<nullable>>
+  Category : varchar(64) <<nullable>>
+  * CreatedAt : timestamptz
+  * UpdatedAt : timestamptz
+}
+
+entity Order {
+  * OrderId : uuid <<PK>>
+  --
+  * AccountId : uuid <<FK>>
+  * Number : varchar(32) <<unique>>
+  * State : varchar(32)
+  * TotalAmount : numeric(12,2)
+  * Currency : varchar(3)
+  DeliveryAddress : varchar(512) <<nullable>>
+  DeliveryState : varchar(32) <<nullable>>
+  * CreatedAt : timestamptz
+  * UpdatedAt : timestamptz
+}
+
+entity OrderItem {
+  * OrderItemId : uuid <<PK>>
+  --
+  * OrderId : uuid <<FK>>
+  * ProductId : uuid <<FK>>
+  * Quantity : int
+  * UnitPrice : numeric(12,2)
+  * CreatedAt : timestamptz
+}
+
+entity Plan {
+  * PlanId : uuid <<PK>>
+  --
+  * Name : varchar(64)
+  * Price : numeric(12,2)
+  * Currency : varchar(3)
+  * BillingPeriod : varchar(16)
+  Features : jsonb <<nullable>>
+  * IsActive : boolean
+  * CreatedAt : timestamptz
+  * UpdatedAt : timestamptz
+}
+
+entity Subscription {
+  * SubscriptionId : uuid <<PK>>
+  --
+  * AccountId : uuid <<FK>>
+  * PlanId : uuid <<FK>>
+  * State : varchar(32)
+  StartedAt : timestamptz <<nullable>>
+  ExpiresAt : timestamptz <<nullable>>
+  AutoRenew : boolean
+  * CreatedAt : timestamptz
+  * UpdatedAt : timestamptz
+}
+
+entity Transaction {
+  * TransactionId : uuid <<PK>>
+  --
+  * AccountId : uuid <<FK>>
+  OrderId : uuid <<FK, nullable>>
+  SubscriptionId : uuid <<FK, nullable>>
+  * Amount : numeric(12,2)
+  * Currency : varchar(3)
+  * PaymentGateway : varchar(64)
+  PaymentDetails : jsonb <<nullable>>
+  * State : varchar(32)
+  CompletedAt : timestamptz <<nullable>>
+  * CreatedAt : timestamptz
+}
+
+' ==================== SUPPORT ====================
+entity Article {
+  * ArticleId : uuid <<PK>>
+  --
+  * Type : varchar(32)
+  DeviceTypeId : uuid <<FK, nullable>>
+  * Title : varchar(256)
+  * Content : text
+  * CreatedAt : timestamptz
+  * UpdatedAt : timestamptz
+}
+
+entity Ticket {
+  * TicketId : uuid <<PK>>
+  --
+  * AccountId : uuid <<FK>>
+  DeviceId : uuid <<FK, nullable>>
+  AssignedTo : uuid <<FK, nullable>>
+  * Subject : varchar(256)
+  * Status : varchar(32)
+  Priority : varchar(16) <<nullable>>
+  * CreatedAt : timestamptz
+  * UpdatedAt : timestamptz
+}
+
+entity TicketMessage {
+  * MessageId : uuid <<PK>>
+  --
+  * TicketId : uuid <<FK>>
+  * AuthorId : uuid <<FK>>
+  * Text : text
+  * CreatedAt : timestamptz
+}
+
+' ==================== NOTIFICATIONS ====================
+entity NotificationTemplate {
+  * TemplateId : uuid <<PK>>
+  --
+  * Code : varchar(64) <<unique>>
+  * Channel : varchar(16)
+  Subject : varchar(256) <<nullable>>
+  * BodyTemplate : text
+  * IsActive : boolean
+  * CreatedAt : timestamptz
+  * UpdatedAt : timestamptz
+}
+
+entity Notification {
+  * NotificationId : uuid <<PK>>
+  --
+  * AccountId : uuid <<FK>>
+  TemplateId : uuid <<FK>>
+  * Channel : varchar(16)
+  Subject : varchar(256) <<nullable>>
+  * Body : text
+  * State : varchar(32)
+  SentAt : timestamptz <<nullable>>
+  * CreatedAt : timestamptz
+}
+
+Account ||--|| User 
+
+Account ||--o{ House : owns
+House ||--o{ Room : contains
+Room ||--o{ Device : contains
+DeviceType ||--o{ Device : defines
+Device ||--o{ Telemetry : generates
+Device ||--|| DeviceState : has
+
+Account ||--o{ Scenario : owns
+Scenario ||--|{ Rule : contains
+Rule ||--|{ Action : contains
+Device |o--o{ Action
+Scenario ||--o{ ScenarioLog : produces
+Rule ||--o{ ScenarioLog : produces
+Telemetry }o..o{ Rule : "по MetricName"
+
+DeviceType |o--o{ Product
+Product ||--o{ OrderItem
+Order ||--o{ OrderItem
+Account ||--o{ Order
+Order |o--o{ Transaction
+Plan ||--o{ Subscription
+Account ||--o{ Subscription
+Account ||--o{ Transaction
+Subscription |o--o{ Transaction
+
+DeviceType |o--o{ Article
+Account ||--o{ Ticket
+Account |o--o{ Ticket : "AssignedTo"
+Ticket ||--o{ TicketMessage
+Account ||--o{ TicketMessage
+Device |o--o{ Ticket
+
+Account ||--o{ Notification
+NotificationTemplate ||--o{ Notification
+@enduml
