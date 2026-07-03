@@ -1,5 +1,5 @@
 @startuml
-title ER — Smart Home «Тёплый дом»
+title ER — Система управления умным домом «Тёплый дом»
 hide circle
 skinparam linetype ortho
 
