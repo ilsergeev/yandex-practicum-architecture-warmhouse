@@ -72,10 +72,11 @@ Rel(API_Gateway, User_Service, "Изменяет данные профиля", "
 Rel(API_Gateway, Scenario_Service, "Создает сценарий", "REST/HTTPS")
 
 ' ==================== Service => Service Layer ====================
-Rel(Scenario_Service, Notification_Service, "Триггерит уведомления")
-Rel(Billing_Service, Notification_Service, "Уведомления о платежах")
 Rel(Market_Service, Billing_Service, "Инициирует платёж")
-Rel(Billing_Service, Analytics_Service, "Данные о продажах")
+Rel(Scenario_Service, Message_Bus, "Публикует событие сработавшего сценария")
+Rel(Billing_Service, Message_Bus, "Публикует PaymentCompleted / данные о продажах")
+Rel(Message_Bus, Notification_Service, "События для уведомлений")
+Rel(Message_Bus, Analytics_Service, "События о продажах")
 
 
 ' ==================== Core ====================
