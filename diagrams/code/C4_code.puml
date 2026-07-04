@@ -1,0 +1,48 @@
+@startuml
+title Device Adapters
+
+interface DeviceAdapter {
+  + connect(device: Device) : ConnectionResult
+  + sendAction(action: Action) : ActionResult
+}
+
+class OwnDeviceAdapter {
+  - mqttClient : MqttClient
+  + connect(device: Device) : ConnectionResult
+  + sendAction(action: Action) : ActionResult
+}
+
+class PartnerDeviceAdapter <<ACL>> {
+  - translator : ProtocolTranslator
+  + connect(device: Device) : ConnectionResult
+  + sendAction(action: Action) : ActionResult
+  - toPartnerProtocol(action: Action) : PartnerMessage
+}
+
+class ActionInterpreter {
+  - adapters : Map<DeviceType, DeviceAdapter>
+  + route(action: Action) : void
+  - selectAdapter(device: Device) : DeviceAdapter
+}
+
+class ProvisioningService {
+  + provision(request: ProvisionRequest) : Device
+}
+
+class DeviceRepository {
+  + create(device: Device) : Guid
+  + update(device: Device) : void
+  + delete(id: Guid) : void
+  + getById(id: Guid) : Device
+  + getByRoom(roomId: Guid) : List<Device>
+  + getByAccount(accountId: Guid) : List<Device>
+}
+
+DeviceAdapter <|.. OwnDeviceAdapter
+DeviceAdapter <|.. PartnerDeviceAdapter
+
+ActionInterpreter --> DeviceAdapter : uses
+ProvisioningService --> DeviceAdapter : uses
+
+ActionInterpreter --> DeviceRepository : uses
+ProvisioningService --> DeviceRepository : uses

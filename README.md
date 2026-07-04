@@ -73,7 +73,9 @@ C4 As-Is диаграмма контекстов
 
 **Диаграмма кода (Code)**
 
-Добавьте одну диаграмму или несколько.
+![C4 Диаграмма кода DeviceAdapter ](./diagrams/code/C4_code.png)
+
+Исходник: [C4_code.puml](./diagrams/code/C4_code.puml)
 
 # Задание 3. Разработка ER-диаграммы
 
