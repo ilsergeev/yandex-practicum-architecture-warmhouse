@@ -1,0 +1,310 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "WarmHouse.ScenarioService API 1.0",
+    "description": "API Scenario Service",
+    "version": "1.0"
+  },
+  "paths": {
+    "/api/v1/scenarios": {
+      "post": {
+        "tags": ["Scenarios"],
+        "summary": "Create scenario",
+        "description": "Create new scenario for account.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateScenarioRequest"
+              },
+              "examples": {
+                "default": {
+                  "summary": "Scenario creation example.",
+                  "value": {
+                    "accountId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                    "title": "Ночное отопление",
+                    "description": "Поддерживать 20°C с 22:00 до 07:00"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Scenario created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioView"
+                },
+                "examples": {
+                  "default": {
+                    "summary": "Create scenario",
+                    "value": {
+                      "scenarioId": "9c1f8b2a-1234-4a7b-9e10-abcdef012345",
+                      "title": "Ночное отопление",
+                      "description": "Поддерживать 20°C с 22:00 до 07:00",
+                      "isEnabled": true,
+                      "createdAt": "2026-07-03T18:30:00Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Account with ID '3fa85f64-5717-4562-b3fc-2c963f66afa6' not found.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+              }
+            }
+          },
+          "409": {
+            "description": "Scenario with ID '9c1f8b2a-1234-4a7b-9e10-abcdef012345' already exists.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+              }
+            }
+          },
+          "422": {
+            "description": "Scenario title could not be whitespace or empty.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/scenarios/{scenarioId}": {
+      "patch": {
+        "tags": ["Scenarios"],
+        "summary": "Update scenario.",
+        "description": "Update existing scenario.",
+        "parameters": [
+          {
+             "name": "scenarioId",
+             "in": "path",
+             "required": true,
+             "schema": { "type": "string", "format": "uuid" },
+             "description": "Scenario Id",
+             "example": "9c1f8b2a-1234-4a7b-9e10-abcdef012345"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateScenarioRequest"
+              },
+              "examples": {
+                "default": {
+                  "summary": "Scenario update",
+                  "value": {
+                    "title": "Дневное охлаждение",
+                    "description": "Поддерживать 18°C с 07:00 до 22:00"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+           "204": {
+            "description": "Scenario updated."
+          },
+          "404": {
+            "description": "Scenario with ID '9c1f8b2a-1234-4a7b-9e10-abcdef012345' not found.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+              }
+            }
+          },
+          "409": {
+            "description": "Scenario with ID '9c1f8b2a-1234-4a7b-9e10-abcdef012345' updated in another transaction.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+              }
+            }
+          },
+          "422": {
+            "description": "Scenario title could not be whitespace or empty.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/scenarios/{scenarioId}/isEnabled": {
+      "patch": {
+        "tags": ["Scenarios"],
+        "summary": "Change enabled state.",
+        "description": "Change scenario isEnabled flag.",
+        "parameters": [
+          {
+             "name": "scenarioId",
+             "in": "path",
+             "required": true,
+             "schema": { "type": "string", "format": "uuid" },
+             "description": "Scenario Id",
+             "example": "9c1f8b2a-1234-4a7b-9e10-abcdef012345"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeIsEnabledScenarioRequest"
+              },
+              "examples": {
+                "default": {
+                  "summary": "Change scenario isEnabled",
+                  "value": {
+                    "isEnabled": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+           "204": {
+            "description": "Scenario isEnabled changed."
+          },
+          "404": {
+            "description": "Scenario with ID '9c1f8b2a-1234-4a7b-9e10-abcdef012345' not found.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+              }
+            }
+          },
+          "409": {
+            "description": "Scenario with ID '9c1f8b2a-1234-4a7b-9e10-abcdef012345' updated in another transaction.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProblemDetails" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/scenarios/byAccount": {
+      "get": {
+        "tags": ["Scenarios"],
+        "summary": "Get scenarios by account.",
+        "description": "Returns all scenarios owned by the account.",
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "description": "Account Id",
+            "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of account scenarios.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/ScenarioView" }
+                },
+                "examples": {
+                  "default": {
+                    "summary": "Available scenarios",
+                    "value": [
+                      {
+                        "scenarioId": "9c1f8b2a-1234-4a7b-9e10-abcdef012345",
+                        "title": "Дневное охлаждение",
+                        "description": "Поддерживать 18°C с 07:00 до 22:00",
+                        "isEnabled": false,
+                        "createdAt": "2026-07-04T09:15:00Z"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CreateScenarioRequest": {
+        "type": "object",
+        "required": ["accountId", "title"],
+        "properties": {
+          "accountId": { "type": "string", "format": "uuid" },
+          "title": { "type": "string", "maxLength": 128 },
+          "description": { "type": "string", "maxLength": 256, "nullable": true }
+        },
+        "additionalProperties": false
+      },
+      "UpdateScenarioRequest": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string", "maxLength": 128 },
+          "description": { "type": "string", "maxLength": 256, "nullable": true }
+        },
+        "additionalProperties": false
+      },
+      "ChangeIsEnabledScenarioRequest": {
+        "type": "object",
+        "required": ["isEnabled"],
+        "properties": {
+          "isEnabled": { "type": "boolean" }
+        },
+        "additionalProperties": false
+      },
+      "ScenarioView": {
+        "type": "object",
+        "properties": {
+          "scenarioId": { "type": "string", "format": "uuid" },
+          "title": { "type": "string" },
+          "description": { "type": "string", "nullable": true },
+          "isEnabled": { "type": "boolean" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        },
+        "additionalProperties": false
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string", "nullable": true },
+          "title": { "type": "string", "nullable": true },
+          "status": { "type": "integer", "format": "int32", "nullable": true },
+          "detail": { "type": "string", "nullable": true },
+          "instance": { "type": "string", "nullable": true }
+        }
+      }
+    },
+    "securitySchemes": {
+      "Bearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT в заголовке Authorization: Bearer {token}"
+      }
+    }
+  },
+  "security": [{ "Bearer": [] }]
+}

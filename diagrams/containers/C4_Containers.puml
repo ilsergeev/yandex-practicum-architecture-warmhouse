@@ -1,0 +1,94 @@
+@startuml
+title Система управления умным домом "Теплый дом"
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(User, "Пользователь")
+
+Container(Web_App, "Web Application", "React/Vue.js", "Пользовательский интерфейс")
+Container(Mobile_App, "Mobile Application", "React Native", "Мобильное приложение")
+
+Container(Billing_Service, "Биллинг", "Go", "Управление платежами")
+ContainerDb(Billing_DB, "Billing DB", "PostgreSQL", "Платежи, подписки, транзакции")
+
+Container(Market_Service, "Магазин", "Go", "Представление ассортимента товара, создание заказов, оформление доставки")
+ContainerDb(Market_DB, "Market DB", "PostgreSQL", "Товары, заказы, доставка")
+
+Container(Device_Service, "Устройства", "Go", "Подключение новых датчиков, исполнение команд управления, подключение партнеров")
+ContainerDb(Device_DB, "Device DB", "PostgreSQL", "Данные об устройствах")
+
+Container(Analytics_Service, "Аналитика", "Go", "Построение отчетов, визуализация графиков продаж")
+ContainerDb(Analytics_DB, "Analytics DB", "PostgreSQL", "Отчеты")
+
+Container(Identity_Service, "Авторизация и аутентификация", "Go", "Управление авторизацией и аутентификацией")
+ContainerDb(Identity_DB, "Identity DB", "PostgreSQL", "Учетные данные, роли, сессии пользователей")
+
+Container(User_Service, "Профиль пользователя", "Go", "Управление пользователем")
+ContainerDb(User_DB, "User DB", "PostgreSQL", "Профиль пользователя")
+
+Container(Telemetry_Service, "Телеметрия",  "Go", "Преобразование сырых данных от устройств в оформленные контракты, ведение историчности, предоставление показаний потребителям")
+ContainerDb(Telemetry_DB, "Telemetry DB", "TimescaleDB", "Историчность показаний")
+
+Container(Support_Service, "Поддержка", "Go", "Предоставление доступа к базе знаний")
+ContainerDb(Support_DB, "Support DB", "PostgreSQL", "Тикеты, база знаний")
+
+Container(Scenario_Service, "Сценарии", "Go", "Создание сценариев, движок исполнения, реакция на события телеметрии")
+ContainerDb(Scenario_DB, "Scenario DB", "PostgreSQL", "Сценарии, историчность")
+
+Container(Notification_Service, "Нотификации", "Go", "Доставка уведомлений: email/push/SMS, шаблоны, каналы")
+ContainerDb(Notification_DB, "Notification DB", "PostgreSQL", "Шаблоны сообщений")
+
+Container(API_Gateway, "API Gateway", "Nginx", "Единая точка входа, маршрутизация, агрегация для фронтендов")
+
+System_Ext(Devices, "Физические устройства", "Реле, термостаты, выключатели")
+System_Ext(Partner_Devices, "Устройства партнёров", "Термостаты, лампы, замки, камеры")
+ContainerQueue(Message_Bus, "Message Bus", "Kafka/NATS", "Событийная шина: телеметрия, доменные события")
+
+' ==================== Db->Services Relation ====================
+Rel(Billing_Service, Billing_DB, "Читает/пишет", "SQL")
+Rel(Market_Service, Market_DB, "Читает/пишет", "SQL")
+Rel(Device_Service, Device_DB, "Читает/пишет", "SQL")
+Rel(Analytics_Service, Analytics_DB, "Читает/пишет", "SQL")
+Rel(Identity_Service, Identity_DB, "Читает/пишет", "SQL")
+Rel(User_Service, User_DB, "Читает/пишет", "SQL")
+Rel(Telemetry_Service, Telemetry_DB, "Читает/пишет", "SQL")
+Rel(Support_Service, Support_DB, "Читает/пишет", "SQL")
+Rel(Scenario_Service, Scenario_DB, "Читает/пишет", "SQL")
+Rel(Notification_Service, Notification_DB, "Читает/пишет", "SQL")
+
+' ==================== User Layer ====================
+Rel(User, Web_App, "Управляет системой, подключает устройства, создает сценарии")
+Rel(User, Mobile_App, "Управляет системой, подключает устройства, создает сценарии")
+
+' ==================== ApiGateWay Layer ====================
+Rel(Web_App, API_Gateway, "Запросы", "REST/HTTPS")
+Rel(Mobile_App, API_Gateway, "Запросы", "REST/HTTPS")
+
+' ==================== User => Services Layer ====================
+Rel(API_Gateway, Market_Service, "Совершает покупку", "REST/HTTPS")
+Rel(API_Gateway, Identity_Service, "Проверяет токены", "REST/HTTPS")
+Rel(API_Gateway, Device_Service, "Отправляет команды", "REST/HTTPS")
+Rel(API_Gateway, Support_Service, "Создает инцидент", "REST/HTTPS")
+Rel(API_Gateway, User_Service, "Изменяет данные профиля", "REST/HTTPS")
+Rel(API_Gateway, Scenario_Service, "Создает сценарий", "REST/HTTPS")
+
+' ==================== Service => Service Layer ====================
+Rel(Market_Service, Billing_Service, "Инициирует платёж")
+Rel(Scenario_Service, Message_Bus, "Публикует событие сработавшего сценария")
+Rel(Billing_Service, Message_Bus, "Публикует PaymentCompleted / данные о продажах")
+Rel(Message_Bus, Notification_Service, "События для уведомлений")
+Rel(Message_Bus, Analytics_Service, "События о продажах")
+
+
+' ==================== Core ====================
+Rel(Devices, Message_Bus, "Шлют телеметрию", "MQTT")
+Rel(Partner_Devices, Message_Bus, "Шлют телеметрию", "MQTT")
+Rel(Message_Bus, Telemetry_Service, "Получение потока событий")
+Rel(Message_Bus, Scenario_Service, "Получает события для правил")
+
+Rel(Scenario_Service, Message_Bus, "Отправляет команды на основе сценариев")
+Rel(Message_Bus, Device_Service, "Получает команды")
+Rel(Partner_Devices, Device_Service, "Подключаются по стандартным протоколам (через ACL)")
+Rel(Device_Service, Devices, "Управляет состоянием")
+
+
+@enduml

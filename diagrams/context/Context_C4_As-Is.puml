@@ -1,0 +1,18 @@
+@startuml
+title Smart Home System
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Context.puml
+
+Person(User, "Пользователь", "Управляет отоплением и смотрит температуру")
+
+System(SmartHome, "Smart Home System", "Синхронное управление отоплением/предоставление данных о температуре")
+
+System_Ext(TempSensor, "Датчик температуры", "Датчик в доме")
+System_Ext(HeatingController, "Контроллер отопления", "Реле/контроллер отопления в доме")
+
+Rel(User, SmartHome, "Управляет отоплением/запрашивает температуру")
+Rel(SmartHome, User, "Возвращает показания температуры")
+
+Rel(SmartHome, TempSensor, "Запрашивает показания")
+Rel(TempSensor, SmartHome, "Возвращает температуру")
+Rel(SmartHome, HeatingController, "Шлёт команду на изменение температуры")
+@enduml

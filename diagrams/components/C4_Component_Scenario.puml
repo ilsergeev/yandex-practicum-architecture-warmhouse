@@ -1,0 +1,37 @@
+@startuml
+title Компонент Scenario Service
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+System_Ext(Devices, "Физические устройства", "Реле, термостаты, выключатели")
+System_Ext(PartnerDevices, "Устройства партнёров", "Термостаты, лампы, замки, камеры")
+System_Ext(APIGateway, "API Gateway", "Единая точка входа, маршрутизация, агрегация для фронтендов")
+ContainerQueue(MessageBus, "Message Bus", "Kafka/NATS", "Событийная шина: телеметрия, доменные события")
+ContainerDb(ScenarioDB, "Scenario DB", "PostgreSQL", "Сценарии, история срабатываний")
+
+System_Boundary(scenario, "Scenario Service"){
+    Container_Boundary(APILayer, "APILayer"){
+        Component(ScenarioAPI, "Scenario API Controller", "Go/HTTP", "Приём запросов на управление сценариями")
+    }
+    Container_Boundary(BusinessLayer, "BusinessLayer"){
+    	Component(RulesProcessor, "Rules Processor", "Go", "Проверка условий, принятие решений")
+    }
+    Container_Boundary(IntegrationLayer, "IntegrationLayer"){
+    	Component(EventConsumer, "Event Consumer", "Go", "Подписка на события телеметрии из шины")
+    	Component(CommandPublisher, "Command Publisher", "Go", "Публикация команд в шину")
+    	Component(Repository, "Scenario Repository", "Go", "Доступ к БД сценариев")
+    }
+}
+
+Rel(Devices, MessageBus, "Шлют телеметрию", "MQTT")
+Rel(PartnerDevices, MessageBus, "Шлют телеметрию", "MQTT")
+
+Rel(MessageBus, EventConsumer, "Получает данные от устройств")
+Rel(EventConsumer, RulesProcessor, "Получает входящие данные от устройств")
+Rel(RulesProcessor, Repository, "Получает описание сценария")
+Rel(RulesProcessor, CommandPublisher, "Передает сформированные команды для отправки")
+Rel(CommandPublisher, MessageBus, "Отправляет команду")
+
+Rel(APIGateway, ScenarioAPI, "Создает сценарии")
+Rel(ScenarioAPI, Repository, "Сохраняет сценарий")
+Rel(Repository, ScenarioDB, "Читает/пишет", "SQL")
+@enduml

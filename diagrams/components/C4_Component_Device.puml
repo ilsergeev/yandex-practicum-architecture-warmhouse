@@ -1,0 +1,43 @@
+@startuml
+title Компонент Device Service
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+System_Ext(Devices, "Физические устройства", "Реле, термостаты, выключатели")
+System_Ext(PartnerDevices, "Устройства партнёров", "Термостаты, лампы, замки, камеры")
+System_Ext(APIGateway, "API Gateway", "Единая точка входа, маршрутизация, агрегация для фронтендов")
+ContainerQueue(MessageBus, "Message Bus", "Kafka/NATS", "Событийная шина: телеметрия, доменные события")
+ContainerDb(DeviceDB, "Device DB", "PostgreSQL", "Устройства, метаданные, привязка к аккаунтам")
+
+System_Boundary(device, "Device Service"){
+    Container_Boundary(APILayer, "APILayer"){
+        Component(DeviceAPI, "Device API Controller", "Go/HTTP", "Приём команд, создание описания устройств")
+    }
+    Container_Boundary(BusinessLayer, "BusinessLayer"){
+    	Component(CommandInterpreter, "Command Interpreter", "Go", "Валидация команд, маршрутизация между адаптерами")
+	Component(ProvisionModule, "Provision Module", "Go", "Модуль подключения устройств")
+    }
+    Container_Boundary(IntegrationLayer, "IntegrationLayer"){
+    	Component(CommandConsumer, "Command Consumer", "Go", "Подписка на команды от сценариев")
+	Component(OwnDeviceAdapter, "Own Device Adapter", "Go", "Команды на собственные устройства")
+    	Component(Repository, "Device Repository", "Go", "Доступ к БД Device")
+    }
+    Container_Boundary(partner_acl, "Partner Integration (ACL)"){
+       Component(PartnerDeviceAdapter, "ExternalDeviceAdapter", "Go", "Команды устройства партнеров")
+    }
+}
+
+Rel(APIGateway, DeviceAPI, "Команды и подключение устройств", "REST/HTTPS")
+Rel(DeviceAPI, CommandInterpreter, "Команды")
+Rel(DeviceAPI, ProvisionModule, "Подключение устройства")
+Rel(MessageBus, CommandConsumer, "Команды от сценариев", "Kafka/NATS")
+Rel(CommandConsumer, CommandInterpreter, "Команды от сценариев")
+Rel(CommandInterpreter, OwnDeviceAdapter, "Команда своему устройству")
+Rel(CommandInterpreter, PartnerDeviceAdapter, "Команда партнёру")
+Rel(ProvisionModule, OwnDeviceAdapter, "Установка связи")
+Rel(ProvisionModule, PartnerDeviceAdapter, "Подключение партнёра (ACL)")
+Rel(ProvisionModule, Repository, "Сохраняет устройство")
+Rel(Repository, DeviceDB, "Читает/пишет", "SQL")
+Rel(OwnDeviceAdapter, Devices, "Команды", "MQTT")
+Rel(PartnerDeviceAdapter, PartnerDevices, "Команды", "MQTT/CoAP")
+
+@enduml

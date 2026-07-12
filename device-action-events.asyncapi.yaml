@@ -1,0 +1,76 @@
+asyncapi: 3.0.0
+info:
+  title: WarmHouse Action Events
+  version: 1.0.0
+  description: Асинхронные события команд умного дома
+
+servers:
+  production:
+    host: kafka.warmhouse.local:9092
+    protocol: kafka
+    description: Kafka-брокер
+
+channels:
+  deviceActionRequested:
+    address: device.action.requested
+    description: Команды публикуемые сценарием и обрабатываемые устройствами
+    messages:
+      deviceActionMessage:
+        $ref: '#/components/messages/DeviceActionMessage'
+
+operations:
+  publishAction:
+    action: send
+    channel:
+      $ref: '#/channels/deviceActionRequested'
+    summary: Сервис Scenario публикует команды
+
+  consumeAction:
+    action: receive
+    channel:
+      $ref: '#/channels/deviceActionRequested'
+    summary: Сервис Device получает команды для исполнения
+
+components:
+  messages:
+    DeviceActionMessage:
+      name: DeviceActionMessage
+      title: Команда на устройство
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DeviceActionPayload'
+      examples:
+        - name: setTemperatureExample
+          payload:
+            actionId: "3fd8a1ea-c642-463a-b6b1-546b5367a3fa"
+            ruleId: "b3f8d5d1-84dc-4b56-abe3-7ea7d7b7d49c"
+            deviceId: "5948869a-0c82-45a4-8d9d-2a403463f12a"
+            castType: "Addressing"
+            command: "set_temperature"
+            value: "23"
+            createdAt: "2026-07-04T13:00:00Z"
+  schemas:
+    DeviceActionPayload:
+      type: object
+      required: [actionId, ruleId, castType, command, createdAt]
+      properties:
+        actionId:
+          type: string
+          format: uuid
+        ruleId:
+          type: string
+          format: uuid
+        deviceId:
+          type: string
+          format: uuid
+        reqCapability:
+          type: string
+        castType:
+          type: string
+        command:
+          type: string
+        value:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
